@@ -4,26 +4,26 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
-        <title>波長変調送信器</title>
+        <title>周波数変調送信器</title>
     </head>
 
     <body>
 
-        <div><label>送信データ</label><input type="number" id="data" value="1500" step="100"></div>
-        <div><button id="toggle">送出</button> 周波数: <span id="frequency">0</span> Hz</div>
+        <div><label>送信データ</label><input type="number" id="data" value="15" min="0" max="29" step="1"></div>
+        <div><button id="toggle">送出</button> <span id="lambda"></span> μs, <span id="frequency">0</span> Hz</div>
 
         <div>
-            <div><label>送信データステップ</label><input type="number" id="step" value="100"></div>
-            <div><label>タイマ精度(μs)</label><input type="number" id="precision" value="112"></div>
-            <div><label>誤差幅(steps)</label><input type="number" id="width" value="10"></div>
+            <div><label>最小波長</label><input type="number" id="lambdaMin" value="500"> μs, <span id="fMax"></span> Hz</div>
+            <div><label>最大波長</label><input type="number" id="lambdaMax" value="20000"> μs, <span id="fMin"></span> Hz</div>
+            <div><label>ステップ数</label><input type="number" id="step" value="30"></div>
+            <div><span id="lambdaStep"></span> μs/step</div>
         </div>
 
         <script>
-            let step = 100;
-            let precision = 112;
-            let width = 10;
-            let data = 1500;
-            let frequency = 0;
+            let data = 15;
+            let lambdaMin = 500;
+            let lambdaMax = 20000;
+            let step = 30;
 
             const audioContext = new AudioContext();
             audioContext.suspend();
@@ -33,27 +33,33 @@
             squareOscillator.start();
             calculateFrequency();
 
-            document.getElementById("step").addEventListener("change", e => {
-                step = e.target.value;
-                document.getElementById("data").step = step;
-                calculateFrequency();
-            });
-            document.getElementById("precision").addEventListener("change", e => {
-                precision = e.target.value;
-                calculateFrequency();
-            });
-            document.getElementById("width").addEventListener("change", e => {
-                width = e.target.value;
-                calculateFrequency();
-            });
             document.getElementById("data").addEventListener("change", e => {
-                data = e.target.value;
+                data = Number(e.target.value);
+                calculateFrequency();
+            });
+            document.getElementById("lambdaMin").addEventListener("change", e => {
+                lambdaMin = Number(e.target.value)
+                calculateFrequency();
+            });
+            document.getElementById("lambdaMax").addEventListener("change", e => {
+                lambdaMax = Number(e.target.value)
+                calculateFrequency();
+            });
+            document.getElementById("step").addEventListener("change", e => {
+                step = Number(e.target.value)
+                document.getElementById("data").max = step - 1;
                 calculateFrequency();
             });
 
             function calculateFrequency() {
-                frequency = 1000000 / (precision * width * Math.round(data / step));
-                document.getElementById("frequency").textContent = frequency;
+                document.getElementById("fMax").textContent = (1000000 / lambdaMin).toFixed(2);
+                document.getElementById("fMin").textContent = (1000000 / lambdaMax).toFixed(2);
+                const lambdaStep = (lambdaMax - lambdaMin) / step;
+                document.getElementById("lambdaStep").textContent = lambdaStep.toFixed(0);
+                const lambda = lambdaMin + lambdaStep * (1 / 2 + data);
+                document.getElementById("lambda").textContent = lambda.toFixed(0);
+                const frequency = 1000000 / lambda;
+                document.getElementById("frequency").textContent = frequency.toFixed(2);
                 squareOscillator?.frequency.setValueAtTime(frequency, audioContext.currentTime);
             }
 

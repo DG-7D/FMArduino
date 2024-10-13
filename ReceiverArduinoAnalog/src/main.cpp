@@ -1,16 +1,15 @@
 #include <Arduino.h>
-const int STEP = 100;
-const int PRECISION = 112;
-const int WIDTH = 10;
+const int LAMBDA_MIN = 500;
+const int LAMBDA_MAX = 20000;
+const int STEP = 30;
 const int zeroLevel = 1024 / 2;
 
 unsigned long lastTime = 0;
 
-int lastValue = 0;
-int lastValidValue = 0;
+int lastData = 0;
 
-int decodeData(int interval) {
-    return round(interval / PRECISION / (double)WIDTH) * STEP;
+int decodeData(int lambda) {
+    return floor((double)(lambda - LAMBDA_MIN) / (LAMBDA_MAX - LAMBDA_MIN) * STEP);
 }
 
 void setup() {
@@ -24,15 +23,16 @@ void loop() {
     while (analogRead(A0) < zeroLevel * 0.9) {
     }
     unsigned long currentTime = micros();
-    unsigned long interval = currentTime - lastTime;
+    unsigned long lambda = currentTime - lastTime;
     lastTime = currentTime;
 
-    const int value = decodeData(interval);
-    if (value == lastValue) {
-        if (value != lastValidValue) {
-            Serial.println(value);
-        }
-        lastValidValue = value;
+    if (lambda < LAMBDA_MIN || LAMBDA_MAX < lambda) {
+        return;
     }
-    lastValue = value;
+
+    const int data = decodeData(lambda);
+    if (data != lastData) {
+        Serial.println(data);
+        lastData = data;
+    }
 }

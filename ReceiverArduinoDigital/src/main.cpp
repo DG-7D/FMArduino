@@ -1,18 +1,17 @@
 #include <Arduino.h>
-const int STEP = 100;
-const int PRECISION = 4;
-const int WIDTH = 300;
+const int LAMBDA_MIN = 500;
+const int LAMBDA_MAX = 20000;
+const int STEP = 30;
 
 volatile unsigned long lastTime = 0;
 volatile unsigned long highDuration = 0;
 volatile unsigned long lowDuration = 0;
-volatile unsigned long interval = 0;
+volatile unsigned long lambda = 0;
 
 int lastData = 0;
-int lastValidData = 0;
 
-int decodeData(int interval) {
-    return round(interval / PRECISION / (double)WIDTH) * STEP;
+int decodeData(int lambda) {
+    return floor((double)(lambda - LAMBDA_MIN) / (LAMBDA_MAX - LAMBDA_MIN) * STEP);
 }
 
 void onChange() {
@@ -22,11 +21,14 @@ void onChange() {
     } else {
         highDuration = currentTime - lastTime;
     }
-    if (abs(highDuration - lowDuration) < PRECISION * WIDTH) {
-        interval = highDuration + lowDuration;
+    lastTime = currentTime;
+
+    if (highDuration < LAMBDA_MIN / 2 || LAMBDA_MAX / 2 < highDuration ||
+        lowDuration < LAMBDA_MIN / 2 || LAMBDA_MAX / 2 < lowDuration) {
         return;
     }
-    lastTime = currentTime;
+
+    lambda = highDuration + lowDuration;
 }
 
 void setup() {
@@ -36,12 +38,9 @@ void setup() {
 }
 
 void loop() {
-    const int data = decodeData(interval);
-    if (data == lastData) {
-        if (data != lastValidData) {
-            Serial.println(data);
-        }
-        lastValidData = data;
+    const int data = decodeData(lambda);
+    if (data != lastData) {
+        Serial.println(data);
+        lastData = data;
     }
-    lastData = data;
 }
