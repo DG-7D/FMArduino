@@ -1,57 +1,72 @@
-<div><label>送信データステップ</label><input type="number" id="step" value="100"></div>
-<div><label>タイマ精度(μs)</label><input type="number" id="precision" value="112"></div>
-<div><label>誤差幅(steps)</label><input type="number" id="width" value="10"></div>
+<!DOCTYPE html>
+<html lang="ja">
 
-<div><label>送信データ</label><input type="number" id="data" value="2300" step="100"></div>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <title>波長変調送信器</title>
+    </head>
 
-<div><button id="toggle">送出</button> 周波数: <span id="frequency">0</span> Hz</div>
+    <body>
 
-<script>
-    let step = 100;
-    let precision = 112;
-    let width = 10;
-    let data = 2300;
-    let frequency = 0;
-    
-    const audioContext = new AudioContext();
-    audioContext.suspend();
-    const squareOscillator = audioContext.createOscillator();
-    squareOscillator.type = "square";
-    squareOscillator.connect(audioContext.destination);
-    squareOscillator.start();
-    calculateFrequency();
+        <div><label>送信データ</label><input type="number" id="data" value="1500" step="100"></div>
+        <div><button id="toggle">送出</button> 周波数: <span id="frequency">0</span> Hz</div>
 
-    document.getElementById("step").addEventListener("change", e => {
-        step = e.target.value;
-        document.getElementById("data").step = step;
-        calculateFrequency();
-    });
-    document.getElementById("precision").addEventListener("change", e => {
-        precision = e.target.value;
-        calculateFrequency();
-    });
-    document.getElementById("width").addEventListener("change", e => {
-        width = e.target.value;
-        calculateFrequency();
-    });
-    document.getElementById("data").addEventListener("change", e => {
-        data = e.target.value;
-        calculateFrequency();
-    });
+        <div>
+            <div><label>送信データステップ</label><input type="number" id="step" value="100"></div>
+            <div><label>タイマ精度(μs)</label><input type="number" id="precision" value="112"></div>
+            <div><label>誤差幅(steps)</label><input type="number" id="width" value="10"></div>
+        </div>
 
-    function calculateFrequency() {
-        frequency = 1000000 / (precision * width * Math.round(data / step));
-        document.getElementById("frequency").textContent = frequency;
-        squareOscillator?.frequency.setValueAtTime(frequency, audioContext.currentTime);
-    }
+        <script>
+            let step = 100;
+            let precision = 112;
+            let width = 10;
+            let data = 1500;
+            let frequency = 0;
 
-    document.getElementById("toggle").addEventListener("click", e => {
-        if (audioContext.state === "running") {
+            const audioContext = new AudioContext();
             audioContext.suspend();
-            e.target.textContent = "送出";
-        } else {
-            audioContext.resume();
-            e.target.textContent = "停止";
-        }
-    });
-</script>
+            const squareOscillator = audioContext.createOscillator();
+            squareOscillator.type = "square";
+            squareOscillator.connect(audioContext.destination);
+            squareOscillator.start();
+            calculateFrequency();
+
+            document.getElementById("step").addEventListener("change", e => {
+                step = e.target.value;
+                document.getElementById("data").step = step;
+                calculateFrequency();
+            });
+            document.getElementById("precision").addEventListener("change", e => {
+                precision = e.target.value;
+                calculateFrequency();
+            });
+            document.getElementById("width").addEventListener("change", e => {
+                width = e.target.value;
+                calculateFrequency();
+            });
+            document.getElementById("data").addEventListener("change", e => {
+                data = e.target.value;
+                calculateFrequency();
+            });
+
+            function calculateFrequency() {
+                frequency = 1000000 / (precision * width * Math.round(data / step));
+                document.getElementById("frequency").textContent = frequency;
+                squareOscillator?.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            }
+
+            document.getElementById("toggle").addEventListener("click", e => {
+                if (audioContext.state === "running") {
+                    audioContext.suspend();
+                    e.target.textContent = "送出";
+                } else {
+                    audioContext.resume();
+                    e.target.textContent = "停止";
+                }
+            });
+        </script>
+    </body>
+
+</html>
